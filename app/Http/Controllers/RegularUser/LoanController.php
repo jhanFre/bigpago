@@ -6,7 +6,7 @@ use App\Loan;
 use App\Client;
 use App\Payment;
 use App\RegularUser;
-//use App\Transformers\LoanTransformer;
+use App\Transformers\LoanTransformer;
 use App\Http\Controllers\ApiController;
 use Illuminate\Http\Request;
 
@@ -15,8 +15,12 @@ class LoanController extends ApiController
     public function __construct()
     {
         parent::__construct();
-        //$this->middleware('transform.input:' . LoanTransformer::class)->only(['store', 'update']);
+        $this->middleware('transform.input:' . LoanTransformer::class)->only(['store', 'update']);
         $this->middleware('scope:manage-user')->only('index', 'store', 'show', 'update', 'destroy');
+        $this->middleware('can:view,regular_user')->only('index', 'show');
+        $this->middleware('can:create,regular_user')->only('store');
+        $this->middleware('can:update,regular_user')->only('update');
+        $this->middleware('can:delete,regular_user')->only('destroy');
     }
     /**
      * Display a listing of the resource.
@@ -25,7 +29,6 @@ class LoanController extends ApiController
      */
     public function index(RegularUser $regularUser, Client $client)
     {
-        $this->authorize('view', $regularUser);
         if (!$regularUser->client()->find($client->id)) {
             return $this->errorResponse('Error de Integridad, los datos no tienen relación con el Usuario', 404);
         }
@@ -41,7 +44,6 @@ class LoanController extends ApiController
      */
     public function store(Request $request, RegularUser $regularUser, Client $client,  Loan $loan)
     {
-        $this->authorize('create', $regularUser);
         $rules = [
             'type_loan' => 'required|string',
             'quantity' => 'required|integer',
@@ -112,7 +114,6 @@ class LoanController extends ApiController
      */
     public function show(RegularUser $regularUser, Client $client, Loan $loan)
     {
-        $this->authorize('view', $regularUser);
         if (!$regularUser->client()->find($client->id)) {
             return $this->errorResponse('Error de Integridad, los datos no tienen relación con el Usuario', 404);
         }
@@ -131,7 +132,6 @@ class LoanController extends ApiController
      */
     public function update(Request $request, RegularUser $regularUser, Client $client, Loan $loan)
     {
-        $this->authorize('update', $regularUser);
         $rules = [
             'state' => 'in:' . Loan::PAIDLOAN . ',' . Loan::PROCESSLOAN . ',' . Loan::OVERDUELOAN,
         ];
@@ -163,7 +163,6 @@ class LoanController extends ApiController
      */
     public function destroy(RegularUser $regularUser, Client $client, Loan $loan)
     {
-        $this->authorize('delete', $regularUser);
         if (!$regularUser->client()->find($client->id)) {
             return $this->errorResponse('Error de Integridad, los datos no tienen relación con el Usuario', 404);
         }

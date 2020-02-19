@@ -7,6 +7,7 @@ use App\Client;
 use App\Payment;
 use App\RegularUser;
 use App\Http\Controllers\ApiController;
+use Carbon\Carbon;
 
 class PaymentsController extends ApiController
 {
@@ -14,6 +15,7 @@ class PaymentsController extends ApiController
     {
         parent::__construct();
         $this->middleware('scope:manage-user')->only('index');
+        $this->middleware('can:view,regular_user')->only('index');
     }
     /**
      * Display a listing of the resource.
@@ -22,9 +24,7 @@ class PaymentsController extends ApiController
      */
     public function index(RegularUser $regularUser, Client $client, Loan $loan, Payment $payment)
     {        
-        $this->authorize('view', $regularUser);
         $payment = $regularUser->client()->whereHas('loan')->with('loan.payment')->get()->pluck('loan')->collapse()->pluck('payment')->collapse();
-        //echo ($payment); 
         return $this->showAll($payment);
     }
 }

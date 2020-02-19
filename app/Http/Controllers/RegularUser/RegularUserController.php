@@ -11,6 +11,7 @@ class RegularUserController extends ApiController
     {
         parent::__construct();
         $this->middleware('scope:manage-user')->only('show');
+        $this->middleware('can:view,regular_user')->only('show');
     }
 
     /**
@@ -21,7 +22,6 @@ class RegularUserController extends ApiController
      */
     public function show(RegularUser $regularUser)
     {
-        $this->authorize('view', $regularUser);
         return $this->showOne($regularUser);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Data;
 use App\User;
-//use App\Transformers\UserTransformer;
+use App\Transformers\UserTransformer;
 use App\Http\Controllers\ApiController;
 use App\Mail\UserCreated;
 use Illuminate\Http\Request;
@@ -15,7 +15,7 @@ class UserController extends ApiController
     public function __construct()
     {
         $this->middleware('auth:api')->except(['store', 'verify', 'resend']);
-        //$this->middleware('transform.input:' . UserTransformer::class)->only(['store', 'update']);
+        $this->middleware('transform.input:' . UserTransformer::class)->only(['store', 'update']);
         $this->middleware('scope:manage-user')->only('update');
         $this->middleware('can:update,user')->only('update');
     }

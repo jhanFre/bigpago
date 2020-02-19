@@ -6,7 +6,7 @@ use App\Loan;
 use App\Client;
 use App\Payment;
 use App\RegularUser;
-//use App\Transformers\PaymentTransformer;
+use App\Transformers\PaymentTransformer;
 use App\Http\Controllers\ApiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +16,12 @@ class PaymentController extends ApiController
     public function __construct()
     {
         parent::__construct();
-        //$this->middleware('transform.input:' . PaymentTransformer::class)->only(['store', 'update']);
+        $this->middleware('transform.input:' . PaymentTransformer::class)->only(['store', 'update']);
         $this->middleware('scope:manage-user')->only('index', 'store', 'show', 'update', 'destroy');
+        $this->middleware('can:view,regular_user')->only('index', 'show');
+        $this->middleware('can:create,regular_user')->only('store');
+        $this->middleware('can:update,regular_user')->only('update');
+        $this->middleware('can:delete,regular_user')->only('destroy');
     }
     /**
      * Display a listing of the resource.
@@ -26,7 +30,6 @@ class PaymentController extends ApiController
      */
     public function index(RegularUser $regularUser, Client $client, Loan $loan)
     {
-        $this->authorize('view', $regularUser);
         if (!$regularUser->client()->find($client->id)) {
             return $this->errorResponse('Error de Integridad, los datos no tienen relación con el Usuario', 404);
         }
@@ -45,7 +48,6 @@ class PaymentController extends ApiController
      */
     public function store(Request $request, RegularUser $regularUser, Client $client, Loan $loan, Payment $payment)
     {
-        $this->authorize('create', $regularUser);
         $rules = [
             'quantity' => 'required|integer',
             'payment_date' => 'required|date'
@@ -92,7 +94,6 @@ class PaymentController extends ApiController
      */
     public function show(RegularUser $regularUser, Client $client, Loan $loan, Payment $payment)
     {
-        $this->authorize('view', $regularUser);
         if (!$regularUser->client()->find($client->id)) {
             return $this->errorResponse('Error de Integridad, los datos no tienen relación con el Usuario', 404);
         }
@@ -114,7 +115,6 @@ class PaymentController extends ApiController
      */
     public function update(Request $request, RegularUser $regularUser, Client $client, Loan $loan, Payment $payment)
     {
-        $this->authorize('update', $regularUser);
         $rules = [
             'state' => 'in:' . Payment::PAIDFEES . ',' . Payment::PENDINGFEES . ',' . Payment::OVERDUEFEES,
         ];
@@ -179,7 +179,6 @@ class PaymentController extends ApiController
      */
     public function destroy(RegularUser $regularUser, Client $client, Loan $loan, Payment $payment)
     {
-        $this->authorize('delete', $regularUser);
         if (!$regularUser->client()->find($client->id)) {
             return $this->errorResponse('Error de Integridad, los datos no tienen relación con el Usuario', 404);
         }

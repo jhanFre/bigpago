@@ -4,7 +4,7 @@ namespace App\Http\Controllers\RegularUser;
 
 use App\Client;
 use App\RegularUser;
-//use App\Transformers\ClientTransformer;
+use App\Transformers\ClientTransformer;
 use App\Http\Controllers\ApiController;
 use Illuminate\Http\Request;
 
@@ -13,8 +13,12 @@ class ClientController extends ApiController
     public function __construct()
     {
         parent::__construct();
-        //$this->middleware('transform.input:' . ClientTransformer::class)->only(['store', 'update']);
+        $this->middleware('transform.input:' . ClientTransformer::class)->only(['store', 'update']);
         $this->middleware('scope:manage-user')->only('index', 'store', 'show', 'update', 'destroy');
+        $this->middleware('can:view,regular_user')->only('index', 'show');
+        $this->middleware('can:create,regular_user')->only('store');
+        $this->middleware('can:update,regular_user')->only('update');
+        $this->middleware('can:delete,regular_user')->only('destroy');
     }
     /**
      * Display a listing of the resource.
@@ -23,7 +27,6 @@ class ClientController extends ApiController
      */
     public function index(RegularUser $regularUser)
     {
-        $this->authorize('view', $regularUser);
         $clients = $regularUser->client;
         return $this->showAll($clients); 
     }
@@ -36,7 +39,6 @@ class ClientController extends ApiController
      */
     public function store(Request $request, RegularUser $regularUser, Client $client)
     {
-        $this->authorize('create', $regularUser);
         $rules = [
             'name' => 'required|string',
             'surname' => 'required|string',
@@ -62,7 +64,6 @@ class ClientController extends ApiController
      */
     public function show(RegularUser $regularUser, Client $client)
     {
-        $this->authorize('view', $regularUser);
         if (!$regularUser->client()->find($client->id)) {
             return $this->errorResponse('Error de Integridad, los datos no tienen relación con el Usuario', 404);
         }
@@ -78,7 +79,6 @@ class ClientController extends ApiController
      */
     public function update(Request $request, RegularUser $regularUser, Client $client)
     {
-        $this->authorize('update', $regularUser);
         $rules = [
             'name' => 'string',
             'surname' => 'string',
@@ -143,7 +143,6 @@ class ClientController extends ApiController
      */
     public function destroy(RegularUser $regularUser, Client $client)
     {
-        $this->authorize('delete', $regularUser);
         if ($regularUser->id != $client->regular_user_id){
             return $this->errorResponse('Error de Integridad, los datos no tienen relación con el Usuario', 404);
         }

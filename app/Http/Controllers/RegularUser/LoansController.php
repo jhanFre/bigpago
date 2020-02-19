@@ -14,6 +14,7 @@ class LoansController extends ApiController
     {
         parent::__construct();
         $this->middleware('scope:manage-user')->only('index');
+        $this->middleware('can:view,regular_user')->only('index');
     }
     /**
      * Display a listing of the resource.
@@ -22,7 +23,6 @@ class LoansController extends ApiController
      */
     public function index(RegularUser $regularUser)
     {
-        $this->authorize('view', $regularUser);
         $p1 = DB::table('loans')->where('regular_user_id', $regularUser->id)->where('deleted_at', null)->sum('total');
         $p2 = DB::table('loans')->where('regular_user_id', $regularUser->id)->where('deleted_at', null)->sum('quantity');
         $p3 = $p1-$p2;
