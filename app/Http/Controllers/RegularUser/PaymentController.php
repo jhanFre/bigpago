@@ -9,7 +9,6 @@ use App\RegularUser;
 use App\Transformers\PaymentTransformer;
 use App\Http\Controllers\ApiController;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PaymentController extends ApiController
 {
@@ -68,21 +67,7 @@ class PaymentController extends ApiController
         $data['regular_user_id'] = $loan->regular_user_id;
         $data['type_payment'] = Payment::COUNTED;
         $data['state'] = Payment::PAIDFEES;
-        $p1 = DB::table('payments')->where('loan_id', $loan->id)->where('state', Payment::PAIDFEES)->where('deleted_at', null)->sum('quantity');
-        $p2 = $loan->total - $p1;
-        if ($data['quantity'] > $p2) {
-            return $this->errorResponse('La cuota no puede superar lo que debe: $'.$p2, 403);
-        }
         $payment = Payment::create($data);
-        $p3 = DB::table('payments')->where('loan_id', $loan->id)->where('state', Payment::PAIDFEES)->where('deleted_at', null)->sum('quantity');
-        $p4 = $loan->total - $p3;
-        if ($p4 == '0') {
-            $loan->fill([
-                'state' => Loan::PAIDLOAN,
-            ]);
-            $loan->save();
-            return $this->showOne($payment);
-        }
         return $this->showOne($payment);
     }
 
@@ -140,34 +125,7 @@ class PaymentController extends ApiController
         if ($payment->isClean()) {
             return $this->errorResponse('Se debe especificar al menos un valor diferente para actualizar', 422);
         }
-        if ($payment->state == Payment::OVERDUEFEES || $payment->state == Payment::PENDINGFEES) {
-            $payment->save();
-            $p3 = DB::table('payments')->where('loan_id', $loan->id)->where('state', Payment::PAIDFEES)->where('deleted_at', null)->sum('quantity');
-            $p4 = $loan->total - $p3;
-            if ($p4 == '0') {
-                $loan->fill([
-                    'state' => Loan::PAIDLOAN,
-                ]);
-                $loan->save();
-                return $this->showOne($payment);
-            }
-            return $this->showOne($payment);
-        }
-        $p1 = DB::table('payments')->where('loan_id', $loan->id)->where('state', Payment::PAIDFEES)->where('deleted_at', null)->sum('quantity');
-        $p2 = $loan->total - $p1;
-        if ($payment->quantity > $p2) {
-            return $this->errorResponse('Debe generar una cuota diferente, esta supera lo que debe: $'.$p2, 403);
-        }
         $payment->save();
-        $p3 = DB::table('payments')->where('loan_id', $loan->id)->where('state', Payment::PAIDFEES)->where('deleted_at', null)->sum('quantity');
-        $p4 = $loan->total - $p3;
-        if ($p4 == '0') {
-            $loan->fill([
-                'state' => Loan::PAIDLOAN,
-            ]);
-            $loan->save();
-            return $this->showOne($payment);
-        }
         return $this->showOne($payment);
     }
 

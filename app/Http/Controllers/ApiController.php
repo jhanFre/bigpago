@@ -14,4 +14,11 @@ class ApiController extends Controller
     {
     	$this->middleware('auth:api');
     }
+
+    protected function allowedAdminAction()
+    {
+	    if (Gate::denies('admin-action')) {
+            throw new AuthorizationException('Esta acción no te es permitida');
+        }    	
+    }
 }

@@ -17,7 +17,20 @@ class UserController extends ApiController
         $this->middleware('auth:api')->except(['store', 'verify', 'resend']);
         $this->middleware('transform.input:' . UserTransformer::class)->only(['store', 'update']);
         $this->middleware('scope:manage-user')->only('update');
+        $this->middleware('scope:manage-admin')->only('index', 'show', 'destroy');
         $this->middleware('can:update,user')->only('update');
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $this->allowedAdminAction();
+        $users = User::all();
+        return $this->showAll($users);
     }
 
     /**
@@ -38,12 +51,27 @@ class UserController extends ApiController
         $data['password'] = bcrypt($request->password);
         $data['verified'] = User::NOTVERIFAID;
         $data['token'] = User::tokenUser();
+        $data['admin'] = User::USERREGULAR;
+        $data['state'] = '1';
         $user = User::create($data);
         $date = [
             'regular_user_id' => $user->id,
         ];
         $dataUser = Data::create($date);
         return $this->showOne($user);
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show(User $user)
+    {
+        $this->allowedAdminAction();
+        return $this->showOne($user);
+        
     }
 
     /**
@@ -59,6 +87,8 @@ class UserController extends ApiController
             'name' => 'string',
             'email' => 'email|unique:users',
             'password' => 'string',
+            'admin' => 'in:' . User::USERADMIN . ',' . User::USERREGULAR,
+            'state' => 'in:0,1',
         ];
         $this->validate($request, $rules);
         if ($request->has('name')){
@@ -72,10 +102,34 @@ class UserController extends ApiController
         if ($request->has('password')){
             $user->password = bcrypt($request->password);
         }
+        if ($request->has('admin')) {
+            $this->allowedAdminAction();
+            if (!$user->adminUser()) {
+                return $this->errorResponse('Unicamente los usuarios verificados pueden cambiar su valor de administrador', 403);
+            }
+            $user->admin = $request->admin;
+        }
+        if ($request->has('state')){
+            $this->allowedAdminAction();
+            $user->state = $request->state;
+        }
         if (!$user->isDirty()){
              return $this->errorResponse('Se debe especificar al menos un valor diferente para actualizar', 422);        
         }
         $user->save();
+        return $this->showOne($user);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(User $user)
+    {
+        $this->allowedAdminAction();
+        $user->delete();
         return $this->showOne($user);
     }
 
@@ -97,7 +151,7 @@ class UserController extends ApiController
     public function resend(User $user)
     {
         if ($user->verifaidUser()) {
-            return $this->errorResponse('Este usuario ya ha sido verificado.', 409);
+            return $this->errorResponse('Este usuario ya ha sido verificado.', 403);
         }
         retry(5, function() use ($user) {
             Mail::to($user)->send(new UserCreated($user));

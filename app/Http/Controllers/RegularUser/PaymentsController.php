@@ -7,7 +7,6 @@ use App\Client;
 use App\Payment;
 use App\RegularUser;
 use App\Http\Controllers\ApiController;
-use Carbon\Carbon;
 
 class PaymentsController extends ApiController
 {

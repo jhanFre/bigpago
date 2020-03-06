@@ -22,6 +22,8 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->string('verified')->default(User::NOTVERIFAID);
             $table->string('token')->nullable();
+            $table->string('admin')->default(User::USERREGULAR);
+            $table->string('state');
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

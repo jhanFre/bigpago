@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 */
 // USER
 Route::name('me')->get('users/me', 'User\UserController@me');
-Route::resource('users', 'User\UserController', ['only' => ['store', 'update']]);
+Route::resource('users', 'User\UserController', ['only' => ['index', 'show', 'store', 'update', 'destroy']]);
 Route::name('verify')->get('users/verify/{token}', 'User\UserController@verify');
 Route::name('resend')->get('users/{user}/resend', 'User\UserController@resend');
 Route::post('oauth/token', '\Laravel\Passport\Http\Controllers\AccessTokenController@issueToken');
@@ -31,9 +31,10 @@ Route::group([
 // REGULAR USER
 Route::resource('regular_users', 'RegularUser\RegularUserController', ['only' => ['show']]);
 
+Route::resource('clients', 'RegularUser\ClientsController', ['only' => ['index']]);
+Route::resource('regular_users.loans', 'RegularUser\LoansController', ['only' => ['index']]);
+Route::resource('regular_users.payments', 'RegularUser\PaymentsController', ['only' => ['index']]);
+
 Route::resource('regular_users.clients', 'RegularUser\ClientController', ['only' => ['index', 'show', 'store', 'update', 'destroy']]);
 Route::resource('regular_users.clients.loans', 'RegularUser\LoanController', ['only' => ['index', 'show', 'store', 'update', 'destroy']]);
 Route::resource('regular_users.clients.loans.payments', 'RegularUser\PaymentController', ['only' => ['index', 'show', 'store', 'update', 'destroy']]);
-
-Route::resource('regular_users.loans', 'RegularUser\LoansController', ['only' => ['index']]);
-Route::resource('regular_users.payments', 'RegularUser\PaymentsController', ['only' => ['index']]);

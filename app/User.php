@@ -24,13 +24,16 @@ class User extends Authenticatable
     const NOTVERIFAID = '0';
     const VERIFAIDUSER = '1';
 
+    const USERADMIN = '0';
+    const USERREGULAR = '1';
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'verified', 'token',
+        'name', 'email', 'password', 'verified', 'token', 'admin', 'state',
     ];
 
     /**
@@ -71,6 +74,10 @@ class User extends Authenticatable
     public function verifaidUser()
     {
         return $this->verified == User::VERIFAIDUSER;
+    }
+    public function adminUser()
+    {
+        return $this->admin == User::USERADMIN;
     }
     public static function tokenUser()
     {

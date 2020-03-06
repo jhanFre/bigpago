@@ -32,12 +32,17 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        Gate::define('admin-action', function ($user) {
+            return $user->adminUser();
+        });
+
         Passport::routes();
         Passport::tokensExpireIn(Carbon::now()->addDays(30));
         Passport::refreshTokensExpireIn(Carbon::now()->addDays(30));
 
         Passport::tokensCan([
             'manage-user' => 'Le permitira relaizar las Operaciones de RegularUser@Controller',
+            'manage-admin' => 'Le permitira relaizar las Operaciones de User@Controller',
         ]);
     }
 }
